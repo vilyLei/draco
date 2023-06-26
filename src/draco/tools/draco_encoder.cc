@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
     }
   }
   // for ctm fast debug
-  bool ctmEncoderDebugEnabled = true;
+  bool ctmEncoderDebugEnabled = false;
   if (!ctmEncoderDebugEnabled) {
       if (argc < 3 || options.input.empty()) {
           Usage();
