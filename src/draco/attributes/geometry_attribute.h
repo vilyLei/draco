@@ -130,6 +130,7 @@ class GeometryAttribute {
   // Fills out_data with the raw value of the requested attribute entry.
   // out_data must be at least byte_stride_ long.
   void GetValue(AttributeValueIndex att_index, void *out_data) const {
+      //printf("GeometryAttribute::GetValue(), att_index.value(): %d\n", att_index.value());
     const int64_t byte_pos = byte_offset_ + byte_stride_ * att_index.value();
     buffer_->Read(byte_pos, out_data, byte_stride_);
   }

@@ -35,7 +35,9 @@ std::unique_ptr<CornerTable> CreateCornerTableFromAttribute(
     const Mesh::Face &face = mesh->face(i);
     for (int j = 0; j < 3; ++j) {
       // Map general vertex indices to attribute indices.
-      new_face[j] = att->mapped_index(face[j]).value();
+        auto fj = face[j];
+      auto v = att->mapped_index(fj).value();
+      new_face[j] = v;
     }
     faces[FaceIndex(i)] = new_face;
   }

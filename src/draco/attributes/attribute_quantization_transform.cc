@@ -237,7 +237,8 @@ void AttributeQuantizationTransform::GeneratePortableAttribute(
   DRACO_DCHECK(is_initialized());
 
   const int num_components = attribute.num_components();
-
+  //printf("AttributeQuantizationTransform::GeneratePortableAttribute(), num_components: %d\n", num_components);
+  //printf("AttributeQuantizationTransform::GeneratePortableAttribute(), point_ids.size(): %d\n", point_ids.size());
   // Quantize all values using the order given by point_ids.
   int32_t *const portable_attribute_data = reinterpret_cast<int32_t *>(
       target_attribute->GetAddress(AttributeValueIndex(0)));
@@ -248,6 +249,8 @@ void AttributeQuantizationTransform::GeneratePortableAttribute(
   const std::unique_ptr<float[]> att_val(new float[num_components]);
   for (uint32_t i = 0; i < point_ids.size(); ++i) {
     const AttributeValueIndex att_val_id = attribute.mapped_index(point_ids[i]);
+
+    //printf("AttributeQuantizationTransform::GeneratePortableAttribute(), att_val_id: %d\n", att_val_id.value());
     attribute.GetValue(att_val_id, att_val.get());
     for (int c = 0; c < num_components; ++c) {
       const float value = (att_val[c] - min_values()[c]);

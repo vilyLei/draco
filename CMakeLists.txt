@@ -366,6 +366,62 @@ list(APPEND draco_core_sources
             "${draco_src_root}/core/varint_encoding.h"
             "${draco_src_root}/core/vector_d.h")
 
+list(APPEND draco_stream_sources
+            "${draco_src_root}/stream/baseDef.h"
+            "${draco_src_root}/stream/ArrayBuffer.cc"
+            "${draco_src_root}/stream/ArrayBuffer.h"
+            "${draco_src_root}/stream/DataView.cc"
+            "${draco_src_root}/stream/DataView.h"
+            "${draco_src_root}/stream/Float32Array.cc"
+            "${draco_src_root}/stream/Float32Array.h"
+            "${draco_src_root}/stream/Int8Array.cc"
+            "${draco_src_root}/stream/Int8Array.h"
+            "${draco_src_root}/stream/Int16Array.cc"
+            "${draco_src_root}/stream/Int16Array.h"
+            "${draco_src_root}/stream/Int32Array.cc"
+            "${draco_src_root}/stream/Int32Array.h"
+            "${draco_src_root}/stream/Uint8Array.cc"
+            "${draco_src_root}/stream/Uint8Array.h"
+            "${draco_src_root}/stream/Uint16Array.cc"
+            "${draco_src_root}/stream/Uint16Array.h"
+            "${draco_src_root}/stream/Uint32Array.cc"
+            "${draco_src_root}/stream/Uint32Array.h")
+			
+list(APPEND draco_ctm_sources
+            "${draco_src_root}/ctm/ctmDef.h"
+            "${draco_src_root}/ctm/ctmUtils.h"
+            "${draco_src_root}/ctm/ICTMRStream.h"
+            "${draco_src_root}/ctm/ICTMWStream.h"
+            "${draco_src_root}/ctm/IDecoder.h"
+            "${draco_src_root}/ctm/IReaderHeader.h"
+            "${draco_src_root}/ctm/CTM.cc"
+            "${draco_src_root}/ctm/CTM.h"
+            "${draco_src_root}/ctm/CTMFile.cc"
+            "${draco_src_root}/ctm/CTMFile.h"
+            "${draco_src_root}/ctm/CTMFileBody.cc"
+            "${draco_src_root}/ctm/CTMFileBody.h"
+            "${draco_src_root}/ctm/CTMStream.cc"
+            "${draco_src_root}/ctm/CTMStream.h"
+            "${draco_src_root}/ctm/FileHeader.cc"
+            "${draco_src_root}/ctm/FileHeader.h"
+            "${draco_src_root}/ctm/FileMG2Header.cc"
+            "${draco_src_root}/ctm/FileMG2Header.h"
+            "${draco_src_root}/ctm/InterleavedStream.cc"
+            "${draco_src_root}/ctm/InterleavedStream.h"
+            "${draco_src_root}/ctm/LZMA.cc"
+            "${draco_src_root}/ctm/LZMA.h"
+            "${draco_src_root}/ctm/OutWindow.cc"
+            "${draco_src_root}/ctm/OutWindow.h"
+            "${draco_src_root}/ctm/RangeDecoder.cc"
+            "${draco_src_root}/ctm/RangeDecoder.h"
+            "${draco_src_root}/ctm/ReaderMG1.cc"
+            "${draco_src_root}/ctm/ReaderMG1.h"
+            "${draco_src_root}/ctm/ReaderMG2.cc"
+            "${draco_src_root}/ctm/ReaderMG2.h"
+            "${draco_src_root}/ctm/ReaderRAW.cc"
+            "${draco_src_root}/ctm/ReaderRAW.h"
+			)
+		
 list(APPEND draco_io_sources
             "${draco_src_root}/io/file_reader_factory.cc"
             "${draco_src_root}/io/file_reader_factory.h"
@@ -383,6 +439,8 @@ list(APPEND draco_io_sources
             "${draco_src_root}/io/obj_decoder.h"
             "${draco_src_root}/io/obj_encoder.cc"
             "${draco_src_root}/io/obj_encoder.h"
+            "${draco_src_root}/io/ctm_decoder.cc"
+            "${draco_src_root}/io/ctm_decoder.h"
             "${draco_src_root}/io/parser_utils.cc"
             "${draco_src_root}/io/parser_utils.h"
             "${draco_src_root}/io/ply_decoder.cc"
@@ -620,7 +678,7 @@ if(EMSCRIPTEN AND DRACO_JS_GLUE)
               ${draco_compression_entropy_sources}
               ${draco_compression_mesh_traverser_sources}
               ${draco_compression_mesh_enc_sources}
-              ${draco_compression_point_cloud_enc_sources}
+              ${draco_compression_point_cloud_enc_sources}              
               ${draco_core_sources}
               ${draco_enc_config_sources}
               ${draco_js_enc_sources}
@@ -820,6 +878,10 @@ else()
                     DEFINES ${draco_defines} INCLUDES ${draco_include_paths})
   draco_add_library(NAME draco_io TYPE OBJECT SOURCES ${draco_io_sources}
                     DEFINES ${draco_defines} INCLUDES ${draco_include_paths})
+  draco_add_library(NAME draco_stream TYPE OBJECT SOURCES ${draco_stream_sources}
+                    DEFINES ${draco_defines} INCLUDES ${draco_include_paths})
+  draco_add_library(NAME draco_ctm TYPE OBJECT SOURCES ${draco_ctm_sources}
+                    DEFINES ${draco_defines} INCLUDES ${draco_include_paths})
   draco_add_library(NAME draco_mesh TYPE OBJECT SOURCES ${draco_mesh_sources}
                     DEFINES ${draco_defines} INCLUDES ${draco_include_paths})
   draco_add_library(NAME draco_metadata_dec TYPE OBJECT SOURCES
@@ -926,6 +988,8 @@ else()
       draco_compression_point_cloud_dec
       draco_compression_point_cloud_enc
       draco_core
+      draco_stream
+      draco_ctm
       draco_dec_config
       draco_enc_config
       draco_io

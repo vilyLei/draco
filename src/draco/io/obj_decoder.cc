@@ -15,12 +15,14 @@
 #include "draco/io/obj_decoder.h"
 
 #include <cctype>
+#include <iostream>
 #include <cmath>
 #include <utility>
 
 #include "draco/io/file_utils.h"
 #include "draco/io/parser_utils.h"
 #include "draco/metadata/geometry_metadata.h"
+
 
 namespace draco {
 
@@ -61,10 +63,12 @@ Status ObjDecoder::DecodeFromFile(const std::string &file_name, Mesh *out_mesh,
 
 Status ObjDecoder::DecodeFromFile(const std::string &file_name,
                                   PointCloud *out_point_cloud) {
+  printf("DecodeFromFile() in draco/io/obj_decoder.cc file.\n");
   std::vector<char> buffer;
   if (!ReadFileToBuffer(file_name, &buffer)) {
     return Status(Status::DRACO_ERROR, "Unable to read input file.");
   }
+
   buffer_.Init(buffer.data(), buffer.size());
 
   out_point_cloud_ = out_point_cloud;
@@ -95,6 +99,7 @@ Status ObjDecoder::DecodeInternal() {
   last_sub_obj_id_ = 0;
   // Parse all lines.
   Status status(Status::OK);
+
   while (ParseDefinition(&status) && status.ok()) {
   }
   if (!status.ok()) {
@@ -104,6 +109,8 @@ Status ObjDecoder::DecodeInternal() {
   if (mesh_files_ && !input_file_name_.empty()) {
     mesh_files_->push_back(input_file_name_);
   }
+
+  std::cout << "ObjDecoder::DecodeInternal(), num_obj_faces_: " << num_obj_faces_ << std::endl;
 
   bool use_identity_mapping = false;
   if (num_obj_faces_ == 0) {
@@ -144,22 +151,17 @@ Status ObjDecoder::DecodeInternal() {
     GeometryAttribute va;
     va.Init(GeometryAttribute::POSITION, nullptr, 3, DT_FLOAT32, false,
             sizeof(float) * 3, 0);
-    pos_att_id_ = out_point_cloud_->AddAttribute(va, use_identity_mapping,
-                                                 num_positions_);
+    pos_att_id_ = out_point_cloud_->AddAttribute(va, use_identity_mapping, num_positions_);
   }
   if (num_tex_coords_ > 0) {
     GeometryAttribute va;
-    va.Init(GeometryAttribute::TEX_COORD, nullptr, 2, DT_FLOAT32, false,
-            sizeof(float) * 2, 0);
-    tex_att_id_ = out_point_cloud_->AddAttribute(va, use_identity_mapping,
-                                                 num_tex_coords_);
+    va.Init(GeometryAttribute::TEX_COORD, nullptr, 2, DT_FLOAT32, false, sizeof(float) * 2, 0);
+    tex_att_id_ = out_point_cloud_->AddAttribute(va, use_identity_mapping, num_tex_coords_);
   }
   if (num_normals_ > 0) {
     GeometryAttribute va;
-    va.Init(GeometryAttribute::NORMAL, nullptr, 3, DT_FLOAT32, false,
-            sizeof(float) * 3, 0);
-    norm_att_id_ =
-        out_point_cloud_->AddAttribute(va, use_identity_mapping, num_normals_);
+    va.Init(GeometryAttribute::NORMAL, nullptr, 3, DT_FLOAT32, false, sizeof(float) * 3, 0);
+    norm_att_id_ = out_point_cloud_->AddAttribute(va, use_identity_mapping, num_normals_);
   }
   if (preserve_polygons_ && has_polygons_) {
     // Create attribute for polygon reconstruction.
@@ -179,6 +181,7 @@ Status ObjDecoder::DecodeInternal() {
     metadata->AddEntryString("name", "added_edges");
     pc->AddAttributeMetadata(added_edge_att_id_, std::move(metadata));
   }
+  /*
   if (num_materials_ > 0 && num_obj_faces_ > 0) {
     GeometryAttribute va;
     const auto geometry_attribute_type = GeometryAttribute::GENERIC;
@@ -215,6 +218,7 @@ Status ObjDecoder::DecodeInternal() {
                                              std::move(material_metadata));
     }
   }
+
   if (!obj_name_to_id_.empty() && num_obj_faces_ > 0) {
     GeometryAttribute va;
     if (obj_name_to_id_.size() < 256) {
@@ -245,7 +249,7 @@ Status ObjDecoder::DecodeInternal() {
                                              std::move(sub_obj_metadata));
     }
   }
-
+  //*/
   // Perform a second iteration of parsing and fill all the data.
   counting_mode_ = false;
   ResetCounters();
@@ -270,11 +274,11 @@ Status ObjDecoder::DecodeInternal() {
 
 #ifdef DRACO_ATTRIBUTE_VALUES_DEDUPLICATION_SUPPORTED
   if (deduplicate_input_values_) {
-    out_point_cloud_->DeduplicateAttributeValues();
+    //out_point_cloud_->DeduplicateAttributeValues();
   }
 #endif
 #ifdef DRACO_ATTRIBUTE_INDICES_DEDUPLICATION_SUPPORTED
-  out_point_cloud_->DeduplicatePointIds();
+  //out_point_cloud_->DeduplicatePointIds();
 #endif
   return status;
 }
@@ -347,8 +351,7 @@ bool ObjDecoder::ParseVertexPosition(Status *status) {
         return true;
       }
     }
-    out_point_cloud_->attribute(pos_att_id_)
-        ->SetAttributeValue(AttributeValueIndex(num_positions_), val);
+    out_point_cloud_->attribute(pos_att_id_)->SetAttributeValue(AttributeValueIndex(num_positions_), val);
   }
   ++num_positions_;
   parser::SkipLine(buffer());
@@ -414,7 +417,7 @@ bool ObjDecoder::ParseTexCoord(Status *status) {
 }
 
 bool ObjDecoder::ParseFace(Status *status) {
-  constexpr int kMaxCorners = 8;
+  constexpr int kMaxCorners = 64;
   char c;
   if (!buffer()->Peek(&c)) {
     return false;
@@ -479,6 +482,8 @@ bool ObjDecoder::ParseFace(Status *status) {
       has_polygons_ = true;
     }
     if (num_indices < 3 || num_indices > kMaxCorners) {
+      std::cout << "ObjDecoder::ParseFace(), num_indices: " << num_indices
+                << ", kMaxCorners: " << kMaxCorners << std::endl;
       *status = ErrorStatus("Invalid number of indices on a face");
       return false;
     }
@@ -638,6 +643,7 @@ void ObjDecoder::MapPointToVertexIndices(
   // point is mapped directly to the specified attribute index. Negative input
   // indices indicate addressing from the last element (e.g. -1 is the last
   // attribute value of a given type, -2 the second last, etc.).
+  // printf("ObjDecoder::MapPointToVertexIndices()...");
   if (indices[0] > 0) {
     out_point_cloud_->attribute(pos_att_id_)
         ->SetPointMapEntry(vert_id, AttributeValueIndex(indices[0] - 1));

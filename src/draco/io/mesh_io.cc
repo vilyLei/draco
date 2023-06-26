@@ -20,6 +20,7 @@
 #include "draco/io/file_utils.h"
 #include "draco/io/file_writer_interface.h"
 #include "draco/io/obj_decoder.h"
+#include "draco/io/ctm_decoder.h"
 #include "draco/io/ply_decoder.h"
 #include "draco/io/stl_decoder.h"
 #ifdef DRACO_TRANSCODER_SUPPORTED
@@ -45,14 +46,12 @@ StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(const std::string &file_name,
   return ReadMeshFromFile(file_name, options, nullptr);
 }
 
-StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(const std::string &file_name,
-                                                 const Options &options) {
+StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(const std::string &file_name, const Options &options) {
+  //printf("ReadMeshFromFile() in draco/io/mesh_io.cc file.\n");
   return ReadMeshFromFile(file_name, options, nullptr);
 }
 
-StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(
-    const std::string &file_name, const Options &options,
-    std::vector<std::string> *mesh_files) {
+StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(const std::string &file_name, const Options &options, std::vector<std::string> *mesh_files) {
   std::unique_ptr<Mesh> mesh(new Mesh());
   // Analyze file extension.
   const std::string extension = LowercaseFileExtension(file_name);
@@ -63,6 +62,7 @@ StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(
   }
   if (extension == "obj") {
     // Wavefront OBJ file format.
+    //printf("ReadMeshFromFile()£¬ C 01, this is a obj format file.\n");
     ObjDecoder obj_decoder;
     obj_decoder.set_use_metadata(options.GetBool("use_metadata", false));
     const Status obj_status =
@@ -71,6 +71,16 @@ StatusOr<std::unique_ptr<Mesh>> ReadMeshFromFile(
       return obj_status;
     }
     return std::move(mesh);
+  }
+  if (extension == "ctm") {
+      //printf("ReadMeshFromFile()£¬ C 02, this is a ctm format file.\n");
+      CTMDecoder ctm_decoder;
+      ctm_decoder.set_use_metadata(options.GetBool("use_metadata", false));
+      const Status ctm_status = ctm_decoder.DecodeFromFile(file_name, mesh.get(), mesh_files);
+      if (!ctm_status.ok()) {
+          return ctm_status;
+      }
+      return std::move(mesh);
   }
   if (extension == "ply") {
     // Stanford PLY file format.

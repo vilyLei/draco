@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+#include <iostream>
 #include "draco/mesh/corner_table.h"
 
 #include <limits>
@@ -25,7 +26,10 @@ CornerTable::CornerTable()
     : num_original_vertices_(0),
       num_degenerated_faces_(0),
       num_isolated_vertices_(0),
-      valence_cache_(*this) {}
+      valence_cache_(*this)
+{
+    std::cout << "CornerTable::constructor()..." << std::endl;
+}
 
 std::unique_ptr<CornerTable> CornerTable::Create(
     const IndexTypeVector<FaceIndex, FaceType> &faces) {
@@ -98,7 +102,8 @@ bool CornerTable::ComputeOppositeCorners(int *num_vertices) {
   // vertex.
   std::vector<int> num_corners_on_vertices;
   num_corners_on_vertices.reserve(num_corners());
-  for (CornerIndex c(0); c < num_corners(); ++c) {
+  auto num = num_corners();
+  for (CornerIndex c(0); c < num; ++c) {
     const VertexIndex v1 = Vertex(c);
     if (v1.value() >= static_cast<int>(num_corners_on_vertices.size())) {
       num_corners_on_vertices.resize(v1.value() + 1, 0);

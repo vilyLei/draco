@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+#include <iostream>
 #include <cinttypes>
 #include <cstdlib>
 
@@ -262,21 +263,52 @@ int main(int argc, char **argv) {
       options.preserve_polygons = true;
     }
   }
-  if (argc < 3 || options.input.empty()) {
-    Usage();
-    return -1;
+  // for ctm fast debug
+  bool ctmEncoderDebugEnabled = true;
+  if (!ctmEncoderDebugEnabled) {
+      if (argc < 3 || options.input.empty()) {
+          Usage();
+          return -1;
+      }
+  }
+  else {
+
+      options.compression_level = 10;
+      options.pos_quantization_bits = 11;
+      options.tex_coords_quantization_bits = 10;
+      options.normals_quantization_bits = 10;
+      options.generic_quantization_bits = 8;
+
+      options.input = ".\\tri01.obj";
+      //options.input = ".\\tri01.ctm";
+      options.input = ".\\box01.ctm";
+      options.input = ".\\box01.obj";
+      options.input = ".\\export_5.obj";
+      //options.input = ".\\errorNormal.ctm";
+      //options.input = ".\\sh202_25.ctm";
+      // 
+      //options.input = ".\\tri01.obj";
+      //options.output = "tri01.obj";
   }
 
   std::unique_ptr<draco::PointCloud> pc;
   draco::Mesh *mesh = nullptr;
   if (!options.is_point_cloud) {
+    //printf("ready load a polygon mesh.\n");
+    printf("\n----------------- ready load a polygon mesh data and parse it ---------------------\n");
+
+    std::cout << "  ### options.compression_level: " << options.compression_level << std::endl;
+    std::cout << "  ### options.pos_quantization_bits: " << options.pos_quantization_bits << std::endl;
+    std::cout << "  ### options.tex_coords_quantization_bits: " << options.tex_coords_quantization_bits << std::endl;
+    std::cout << "  ### options.normals_quantization_bits: " << options.normals_quantization_bits << std::endl;
+    std::cout << "  ### options.generic_quantization_bits: " << options.generic_quantization_bits << std::endl;
+
     draco::Options load_options;
     load_options.SetBool("use_metadata", options.use_metadata);
     load_options.SetBool("preserve_polygons", options.preserve_polygons);
     auto maybe_mesh = draco::ReadMeshFromFile(options.input, load_options);
     if (!maybe_mesh.ok()) {
-      printf("Failed loading the input mesh: %s.\n",
-             maybe_mesh.status().error_msg());
+      printf("Failed loading the input mesh: %s.\n", maybe_mesh.status().error_msg());
       return -1;
     }
     mesh = maybe_mesh.value().get();
@@ -284,8 +316,7 @@ int main(int argc, char **argv) {
   } else {
     auto maybe_pc = draco::ReadPointCloudFromFile(options.input);
     if (!maybe_pc.ok()) {
-      printf("Failed loading the input point cloud: %s.\n",
-             maybe_pc.status().error_msg());
+      printf("Failed loading the input point cloud: %s.\n", maybe_pc.status().error_msg());
       return -1;
     }
     pc = std::move(maybe_pc).value();
@@ -356,6 +387,9 @@ int main(int argc, char **argv) {
     encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC,
                                      options.generic_quantization_bits);
   }
+  printf("\n----------------- ready encoding to draco ---------------------\n");
+  printf("  $$$ options.generic_quantization_bits: %d.\n",options.generic_quantization_bits);
+  printf("  $$$ encoder.SetSpeedOptions speed: %d.\n",speed);
   encoder.SetSpeedOptions(speed, speed);
 
   if (options.output.empty()) {
@@ -369,6 +403,7 @@ int main(int argc, char **argv) {
 
   // Convert to ExpertEncoder that allows us to set per-attribute options.
   std::unique_ptr<draco::ExpertEncoder> expert_encoder;
+  std::cout << "mesh->num_faces(): " << mesh->num_faces() << std::endl;
   if (input_is_mesh) {
     expert_encoder.reset(new draco::ExpertEncoder(*mesh));
   } else {
@@ -379,8 +414,7 @@ int main(int argc, char **argv) {
   // Check if there is an attribute that stores polygon edges. If so, we disable
   // the default prediction scheme for the attribute as it actually makes the
   // compression worse.
-  const int poly_att_id =
-      pc->GetAttributeIdByMetadataEntry("name", "added_edges");
+  const int poly_att_id = pc->GetAttributeIdByMetadataEntry("name", "added_edges");
   if (poly_att_id != -1) {
     expert_encoder->SetAttributePredictionScheme(
         poly_att_id, draco::PredictionSchemeMethod::PREDICTION_NONE);
